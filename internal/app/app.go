@@ -10,12 +10,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/KrllF/Cloud/internal/balancer/roundrobin"
 	"github.com/KrllF/Cloud/internal/config"
 	handler "github.com/KrllF/Cloud/internal/handler/http"
 	"github.com/KrllF/Cloud/internal/handler/http/middleware"
-	"github.com/KrllF/Cloud/internal/ratelimiter/tokenbucket"
 	"github.com/KrllF/Cloud/internal/server"
+	"github.com/KrllF/Cloud/internal/service/balancer/roundrobin"
+	"github.com/KrllF/Cloud/internal/service/ratelimiter/tokenbucket"
 )
 
 const (
