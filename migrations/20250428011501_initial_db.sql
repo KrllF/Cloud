@@ -1,9 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS Users (
-    ip BIGINT PRIMARY KEY,
-    token_size BIGINT NOT NULL,
-    refillRate BIGINT NOT NULL
+    ip TEXT PRIMARY KEY,
+    token_size BIGINT NOT NULL
 )
 -- +goose StatementEnd
 

@@ -17,11 +17,12 @@ type ConnectConfig struct {
 }
 
 type AppConfig struct {
-	Read        time.Duration `yaml:"read"`
-	Write       time.Duration `yaml:"write"`
-	Idle        time.Duration `yaml:"idle"`
-	ReadHeader  time.Duration `yaml:"read_header"`
-	CheckHealth time.Duration `yaml:"time_to_check_health"`
+	Read             time.Duration `yaml:"read"`
+	Write            time.Duration `yaml:"write"`
+	Idle             time.Duration `yaml:"idle"`
+	ReadHeader       time.Duration `yaml:"read_header"`
+	CheckHealth      time.Duration `yaml:"time_to_check_health"`
+	DefaultTokenSize int64         `yaml:"default_token_size"`
 }
 
 type BackendConfig struct {

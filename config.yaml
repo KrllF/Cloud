@@ -3,3 +3,4 @@ write: "1h"
 idle: "1h"
 read_header: "1h"
 time_to_check_health: "0.1m"
+default_token_size: 10

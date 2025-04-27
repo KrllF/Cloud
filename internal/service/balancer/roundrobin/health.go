@@ -15,7 +15,6 @@ func (s *ServerPool) HealthCheck() {
 		log.Println("проверка роботоспособности серверов...")
 		s.healthCheck()
 		log.Println("проверка закончена")
-
 	}
 }
 

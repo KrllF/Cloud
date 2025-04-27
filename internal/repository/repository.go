@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/KrllF/Cloud/internal/config"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -19,11 +20,12 @@ type (
 
 	// Repo структура репо слоя
 	Repo struct {
-		db DB
+		db   DB
+		conf config.Config
 	}
 )
 
 // NewRepository новый Repo
-func NewRepository(db DB) (*Repo, error) {
-	return &Repo{db: db}, nil
+func NewRepository(db DB, conf config.Config) (*Repo, error) {
+	return &Repo{db: db, conf: conf}, nil
 }

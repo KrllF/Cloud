@@ -1,42 +1,61 @@
 package tokenbucket
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
+
+	"github.com/KrllF/Cloud/internal/config"
 )
 
 const (
-	defaultSize = 50
-	usersSize   = 1000
-	refillRate  = 5
+	usersSize  = 1000
+	refillRate = 5
 )
 
-// RateLimiter структура,
-// хранящую map c id пользователя
-// и его bucket
-type RateLimiter struct {
-	Users map[string]*Bucket
-	Mu    sync.Mutex
-}
+type (
+	// Repository интерфейс
+	Repository interface {
+		AddUser(ctx context.Context, ip string) error
+	}
+
+	// RateLimiter структура,
+	// хранящую map c id пользователя
+	// и его bucket
+	RateLimiter struct {
+		Conf  config.Config
+		Repo  Repository
+		Users map[string]*Bucket
+		Mu    sync.Mutex
+	}
+)
 
 // NewRateLimiter конструктор RateLimiter
-func NewRateLimiter() *RateLimiter {
+func NewRateLimiter(conf config.Config, repo Repository) *RateLimiter {
 	return &RateLimiter{
+		Conf:  conf,
+		Repo:  repo,
 		Users: make(map[string]*Bucket, usersSize),
 		Mu:    sync.Mutex{},
 	}
 }
 
 // AddUser добавить пользователя
-func (r *RateLimiter) AddUser(id string) bool {
+func (r *RateLimiter) AddUser(ctx context.Context, id string) (bool, error) {
 	r.Mu.Lock()
 	defer r.Mu.Unlock()
 	if _, ok := r.Users[id]; ok {
-		return false
+		return false, nil
 	}
-	r.Users[id] = NewBucket(defaultSize, time.Second*refillRate)
 
-	return true
+	err := r.Repo.AddUser(ctx, id)
+	if err != nil {
+		return false, fmt.Errorf("r.Repo.AddUser: %w", err)
+	}
+	r.Users[id] = NewBucket(r.Conf.DefaultTokenSize, time.Second*refillRate)
+
+	return true, nil
 }
 
 // Allow проверка на наличие токенов и

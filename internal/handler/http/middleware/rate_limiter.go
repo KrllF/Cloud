@@ -1,12 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"log"
 	"net/http"
 )
 
 type rateLimiter interface {
-	AddUser(id string) bool
+	AddUser(ctx context.Context, id string) (bool, error)
 	Allow(id string) bool
 }
 
@@ -27,7 +28,12 @@ func RateLimiter(tb rateLimiter) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := getUserIP(r)
-			ok := tb.AddUser(ip)
+			ok, err := tb.AddUser(r.Context(), ip)
+			if err != nil {
+				http.Error(w, "ошибка на сервере", http.StatusInternalServerError)
+
+				return
+			}
 			if ok {
 				log.Println("пользователь создан")
 			} else {

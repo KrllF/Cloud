@@ -11,8 +11,10 @@ import (
 	"syscall"
 
 	"github.com/KrllF/Cloud/internal/config"
+	"github.com/KrllF/Cloud/internal/db"
 	handler "github.com/KrllF/Cloud/internal/handler/http"
 	"github.com/KrllF/Cloud/internal/handler/http/middleware"
+	"github.com/KrllF/Cloud/internal/repository"
 	"github.com/KrllF/Cloud/internal/server"
 	"github.com/KrllF/Cloud/internal/service/balancer/roundrobin"
 	"github.com/KrllF/Cloud/internal/service/ratelimiter/tokenbucket"
@@ -48,16 +50,24 @@ type (
 )
 
 // NewApp конструктор App
-func NewApp() (*App, error) {
+func NewApp(ctx context.Context) (*App, error) {
 	conf, err := config.NewConfig("config.json", "config.yaml")
 	if err != nil {
 		return nil, fmt.Errorf("config.NewConfig: %w", err)
 	}
 
 	cls := make([]Closer, 0, sizeCloser)
+	dbs, err := db.NewDB(ctx, conf)
+	if err != nil {
+		return &App{}, fmt.Errorf("db.NewDB: %w", err)
+	}
+	repo, err := repository.NewRepository(dbs, conf)
+	if err != nil {
+		return &App{}, fmt.Errorf("repository.NewRepository: %w", err)
+	}
 	bal := roundrobin.NewServerPool(conf)
 	hand := handler.NewHandler(bal)
-	rate := tokenbucket.NewRateLimiter()
+	rate := tokenbucket.NewRateLimiter(conf, repo)
 	rateLimiter := middleware.RateLimiter(rate)
 	httpServ := server.NewServer(conf, hand.Init(rateLimiter))
 	cls = append(cls, httpServ)

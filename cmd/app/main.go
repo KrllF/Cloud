@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/KrllF/Cloud/internal/app"
 )
 
 func main() {
-	a, err := app.NewApp()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	a, err := app.NewApp(ctx)
 	if err != nil {
 		log.Println("app.NewApp: ", err)
 
