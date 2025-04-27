@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"github.com/KrllF/Cloud/consts"
+	"github.com/KrllF/Cloud/internal/consts"
 )
 
 // GetAttemptsFromContext returns the attempts for request

@@ -7,7 +7,7 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"github.com/KrllF/Cloud/consts"
+	"github.com/KrllF/Cloud/internal/consts"
 )
 
 const (

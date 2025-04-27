@@ -13,6 +13,8 @@ import (
 	"github.com/KrllF/Cloud/internal/balancer/roundrobin"
 	"github.com/KrllF/Cloud/internal/config"
 	handler "github.com/KrllF/Cloud/internal/handler/http"
+	"github.com/KrllF/Cloud/internal/handler/http/middleware"
+	"github.com/KrllF/Cloud/internal/ratelimiter/tokenbucket"
 	"github.com/KrllF/Cloud/internal/server"
 )
 
@@ -55,7 +57,9 @@ func NewApp() (*App, error) {
 	cls := make([]Closer, 0, sizeCloser)
 	bal := roundrobin.NewServerPool(conf)
 	hand := handler.NewHandler(bal)
-	httpServ := server.NewServer(conf, hand.Init())
+	rate := tokenbucket.NewRateLimiter()
+	rateLimiter := middleware.RateLimiter(rate)
+	httpServ := server.NewServer(conf, hand.Init(rateLimiter))
 	cls = append(cls, httpServ)
 
 	return &App{httpServ, bal, cls}, nil

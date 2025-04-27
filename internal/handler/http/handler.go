@@ -32,9 +32,13 @@ func NewHandler(serverPool ServerPool) Handler {
 	return Handler{ServerPool: serverPool, proxies: make(map[string]*httputil.ReverseProxy, sizeMap), mu: sync.RWMutex{}}
 }
 
-// Init инициализация хендлера
-func (h *Handler) Init() http.HandlerFunc {
+// Init инициализация хендлера с middleware
+func (h *Handler) Init(rateLimiterMiddleware func(http.Handler) http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.LB(w, r)
+		finalHandler := rateLimiterMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h.LB(w, r)
+		}))
+
+		finalHandler.ServeHTTP(w, r)
 	})
 }
