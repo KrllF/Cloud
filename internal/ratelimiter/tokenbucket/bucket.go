@@ -21,6 +21,7 @@ func NewBucket(tokenSize int64, refillRate time.Duration) *Bucket {
 		mu:         sync.RWMutex{},
 	}
 	go bucket.startRefilling()
+
 	return bucket
 }
 
@@ -37,15 +38,14 @@ func (b *Bucket) startRefilling() {
 }
 
 func (b *Bucket) Allow() bool {
-	for {
-		current := atomic.LoadInt64(&b.tokenNow)
-		if current <= 0 {
-			time.Sleep(time.Millisecond * 100)
-			continue
-		}
-
-		if atomic.CompareAndSwapInt64(&b.tokenNow, current, current-1) {
-			return true
-		}
+	current := atomic.LoadInt64(&b.tokenNow)
+	if current <= 0 {
+		return false
 	}
+
+	if atomic.CompareAndSwapInt64(&b.tokenNow, current, current-1) {
+		return true
+	}
+
+	return false
 }

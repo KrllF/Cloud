@@ -59,4 +59,6 @@ func (h *Handler) LB(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	http.Error(w, "нет доступных серверов", http.StatusInternalServerError)
 }

@@ -31,9 +31,14 @@ func RateLimiter(TB rateLimiter) func(handler http.Handler) http.Handler {
 				log.Println("пользователь существует")
 			}
 
-			_ = TB.Allow(ip)
+			ok = TB.Allow(ip)
+			if ok {
+				handler.ServeHTTP(w, r)
 
-			handler.ServeHTTP(w, r)
+				return
+			}
+
+			http.Error(w, "нет токенов", http.StatusTooManyRequests)
 		})
 	}
 }

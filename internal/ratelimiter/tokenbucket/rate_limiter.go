@@ -35,10 +35,13 @@ func (r *RateLimiter) AddUser(id string) bool {
 func (r *RateLimiter) Allow(id string) bool {
 	r.Mu.Lock()
 	defer r.Mu.Unlock()
-	if _, ok := r.Users[id]; ok {
+	if _, ok := r.Users[id]; !ok {
 		return false
 	}
-	r.Users[id].Allow()
+	if ok := r.Users[id].Allow(); !ok {
+
+		return false
+	}
 
 	return true
 }
