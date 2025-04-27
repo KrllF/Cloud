@@ -13,6 +13,7 @@ import (
 type ConnectConfig struct {
 	HTTP_HOST string
 	HTTP_PORT string
+	DSN       string
 }
 
 type AppConfig struct {
@@ -72,6 +73,7 @@ func NewConfig(jsonPath, yamlPath string) (Config, error) {
 		ConnectConfig: ConnectConfig{
 			HTTP_HOST: getEnv("HTTP_HOST"),
 			HTTP_PORT: getEnv("HTTP_PORT"),
+			DSN:       getEnv("PG_DSN"),
 		},
 		AppConfig:     appConfig,
 		BackendConfig: backendConfig,
