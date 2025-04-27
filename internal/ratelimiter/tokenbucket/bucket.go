@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Bucket структура бакета
 type Bucket struct {
 	tokenNow   int64
 	tokenSize  int64
@@ -13,6 +14,7 @@ type Bucket struct {
 	mu         sync.RWMutex
 }
 
+// NewBucket конструктор Bucket
 func NewBucket(tokenSize int64, refillRate time.Duration) *Bucket {
 	bucket := &Bucket{
 		tokenNow:   tokenSize,
@@ -25,6 +27,7 @@ func NewBucket(tokenSize int64, refillRate time.Duration) *Bucket {
 	return bucket
 }
 
+// startRefilling добавление новых токенов
 func (b *Bucket) startRefilling() {
 	ticker := time.NewTicker(b.refillRate)
 	defer ticker.Stop()
@@ -37,6 +40,8 @@ func (b *Bucket) startRefilling() {
 	}
 }
 
+// Allow проверка, есть ли токены
+// если есть, то токен удаляется
 func (b *Bucket) Allow() bool {
 	current := atomic.LoadInt64(&b.tokenNow)
 	if current <= 0 {

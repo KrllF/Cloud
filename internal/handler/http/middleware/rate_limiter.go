@@ -18,20 +18,23 @@ func getUserIP(r *http.Request) string {
 	if ip == "" {
 		ip = r.RemoteAddr
 	}
+
 	return ip
 }
-func RateLimiter(TB rateLimiter) func(handler http.Handler) http.Handler {
+
+// RateLimiter middleware, которая проверяет token bucket для пользователя
+func RateLimiter(tb rateLimiter) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := getUserIP(r)
-			ok := TB.AddUser(ip)
+			ok := tb.AddUser(ip)
 			if ok {
 				log.Println("пользователь создан")
 			} else {
 				log.Println("пользователь существует")
 			}
 
-			ok = TB.Allow(ip)
+			ok = tb.Allow(ip)
 			if ok {
 				handler.ServeHTTP(w, r)
 
