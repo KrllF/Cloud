@@ -46,7 +46,7 @@ func (h *Handler) LB(w http.ResponseWriter, r *http.Request) {
 				h.ServerPool.MarkBackendStatus(peer.URL, false)
 
 				attempts := GetAttemptsFromContext(request)
-				log.Printf("%s(%s) Attempting retry %d\n", request.RemoteAddr, request.URL.Path, attempts)
+
 				ctx := context.WithValue(request.Context(), consts.Attempts, attempts+1)
 
 				h.LB(writer, request.WithContext(ctx))
