@@ -35,7 +35,10 @@ type (
 
 // NewHandler конструктор хендлера
 func NewHandler(serverPool ServerPool, rateLimiter RateLimiter) Handler {
-	return Handler{ServerPool: serverPool, RateLimiter: rateLimiter, proxies: make(map[string]*httputil.ReverseProxy, sizeMap), mu: sync.RWMutex{}}
+	return Handler{
+		ServerPool: serverPool, RateLimiter: rateLimiter,
+		proxies: make(map[string]*httputil.ReverseProxy, sizeMap), mu: sync.RWMutex{},
+	}
 }
 
 // Init инициализация хендлера с middleware

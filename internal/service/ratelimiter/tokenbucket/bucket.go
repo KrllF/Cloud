@@ -27,6 +27,7 @@ func NewBucket(tokenSize int64, refillRate time.Duration) *Bucket {
 	return bucket
 }
 
+// UpdateTokenSize обновить максимальное количество токенов
 func (b *Bucket) UpdateTokenSize(tokenSize int64) {
 	b.mu.Lock()
 	defer b.mu.Unlock()

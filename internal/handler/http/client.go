@@ -5,11 +5,13 @@ import (
 	"net/http"
 )
 
+// UpdateTokenSizeRequest запрос
 type UpdateTokenSizeRequest struct {
 	UserIP    string `json:"user_ip"`
 	TokenSize int64  `json:"token_size"`
 }
 
+// UpdateTokenSize обновить максильманый размер токенов
 func (h *Handler) UpdateTokenSize(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusBadRequest)

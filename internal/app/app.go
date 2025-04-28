@@ -71,6 +71,7 @@ func NewApp(ctx context.Context) (*App, error) {
 	hand := handler.NewHandler(bal, rate)
 	httpServ := server.NewServer(conf, hand.Init(rateLimiter))
 	cls = append(cls, httpServ)
+	cls = append(cls, dbs)
 
 	return &App{httpServ, bal, cls}, nil
 }
@@ -78,7 +79,7 @@ func NewApp(ctx context.Context) (*App, error) {
 // Run запустить app
 func (app *App) Run() error {
 	exit := make(chan os.Signal, 1)
-	signal.Notify(exit, syscall.SIGINT)
+	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 	_, cancel := context.WithCancel(context.Background())
 
 	go func() {
