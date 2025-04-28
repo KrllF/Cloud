@@ -21,9 +21,9 @@ linters-settings:
     min-len: 2
     min-occurrences: 2
   gocyclo:
-    min-complexity: 15
+    min-complexity: 10
   gocognit:
-    min-complexity: 20
+    min-complexity: 10
   tagliatelle:
     case:
       rules:

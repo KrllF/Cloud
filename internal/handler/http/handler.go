@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -19,26 +20,35 @@ type (
 		GetNextPeer() *entity.Backend
 		MarkBackendStatus(backendURL *url.URL, alive bool)
 	}
+	// RateLimiter интерфейс rate-limiter
+	RateLimiter interface {
+		UpdateUser(ctx context.Context, ip string, tokenSize int64) error
+	}
 	// Handler структура хендлера
 	Handler struct {
-		ServerPool ServerPool
-		proxies    map[string]*httputil.ReverseProxy
-		mu         sync.RWMutex
+		ServerPool  ServerPool
+		RateLimiter RateLimiter
+		proxies     map[string]*httputil.ReverseProxy
+		mu          sync.RWMutex
 	}
 )
 
 // NewHandler конструктор хендлера
-func NewHandler(serverPool ServerPool) Handler {
-	return Handler{ServerPool: serverPool, proxies: make(map[string]*httputil.ReverseProxy, sizeMap), mu: sync.RWMutex{}}
+func NewHandler(serverPool ServerPool, rateLimiter RateLimiter) Handler {
+	return Handler{ServerPool: serverPool, RateLimiter: rateLimiter, proxies: make(map[string]*httputil.ReverseProxy, sizeMap), mu: sync.RWMutex{}}
 }
 
 // Init инициализация хендлера с middleware
 func (h *Handler) Init(rateLimiterMiddleware func(http.Handler) http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		finalHandler := rateLimiterMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.LB(w, r)
-		}))
+		mux := http.NewServeMux()
 
-		finalHandler.ServeHTTP(w, r)
+		mux.Handle("/", rateLimiterMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			h.LB(w, r)
+		})))
+
+		mux.HandleFunc("/client", h.UpdateTokenSize)
+
+		mux.ServeHTTP(w, r)
 	})
 }

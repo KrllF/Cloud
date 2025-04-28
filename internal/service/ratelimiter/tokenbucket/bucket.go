@@ -27,6 +27,15 @@ func NewBucket(tokenSize int64, refillRate time.Duration) *Bucket {
 	return bucket
 }
 
+func (b *Bucket) UpdateTokenSize(tokenSize int64) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.tokenSize = tokenSize
+	if b.tokenNow > b.tokenSize {
+		b.tokenNow = b.tokenSize
+	}
+}
+
 // startRefilling добавление новых токенов
 func (b *Bucket) startRefilling() {
 	ticker := time.NewTicker(b.refillRate)

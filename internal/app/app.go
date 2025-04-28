@@ -66,9 +66,9 @@ func NewApp(ctx context.Context) (*App, error) {
 		return &App{}, fmt.Errorf("repository.NewRepository: %w", err)
 	}
 	bal := roundrobin.NewServerPool(conf)
-	hand := handler.NewHandler(bal)
 	rate := tokenbucket.NewRateLimiter(conf, repo)
 	rateLimiter := middleware.RateLimiter(rate)
+	hand := handler.NewHandler(bal, rate)
 	httpServ := server.NewServer(conf, hand.Init(rateLimiter))
 	cls = append(cls, httpServ)
 
