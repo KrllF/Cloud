@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/KrllF/Cloud/entity"
+	"go.uber.org/zap"
 )
 
 // UpdateUser обновить данные о пользователе
@@ -22,6 +23,8 @@ func (r *Repo) UpdateUser(ctx context.Context, ip string, opts ...entity.ListUse
 
 	var ipCheck string
 	if err := r.db.QueryRow(ctx, query, options.TokenSize, ip).Scan(&ipCheck); err != nil {
+		r.logg.Error("r.db.QueryRow", zap.Error(err))
+
 		return fmt.Errorf("r.db.QueryRow: %w", err)
 	}
 

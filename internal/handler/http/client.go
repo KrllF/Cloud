@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 // UpdateTokenSizeRequest запрос
@@ -15,6 +17,7 @@ type UpdateTokenSizeRequest struct {
 // UpdateTokenSize обновить максильманый размер токенов
 func (h *Handler) UpdateTokenSize(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
+		h.Logg.Info("некорректный метод")
 		body := ErrorResponce{
 			Code:    http.StatusBadRequest,
 			Message: "r.Method != http.MethodPost",
@@ -54,6 +57,7 @@ func (h *Handler) UpdateTokenSize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.RateLimiter.UpdateUser(r.Context(), token.UserIP, token.TokenSize); err != nil {
+		h.Logg.Error("h.RateLimiter.UpdateUser", zap.Error(err))
 		body := ErrorResponce{
 			Code:    http.StatusInternalServerError,
 			Message: "h.RateLimiter.UpdateUser",

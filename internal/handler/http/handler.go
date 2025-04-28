@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/KrllF/Cloud/entity"
+	"go.uber.org/zap"
 )
 
 const (
@@ -26,6 +27,7 @@ type (
 	}
 	// Handler структура хендлера
 	Handler struct {
+		Logg        *zap.Logger
 		ServerPool  ServerPool
 		RateLimiter RateLimiter
 		proxies     map[string]*httputil.ReverseProxy
@@ -34,8 +36,9 @@ type (
 )
 
 // NewHandler конструктор хендлера
-func NewHandler(serverPool ServerPool, rateLimiter RateLimiter) Handler {
+func NewHandler(logg *zap.Logger, serverPool ServerPool, rateLimiter RateLimiter) Handler {
 	return Handler{
+		Logg:       logg,
 		ServerPool: serverPool, RateLimiter: rateLimiter,
 		proxies: make(map[string]*httputil.ReverseProxy, sizeMap), mu: sync.RWMutex{},
 	}

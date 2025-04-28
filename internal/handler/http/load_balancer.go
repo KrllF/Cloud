@@ -21,6 +21,7 @@ const (
 func (h *Handler) LB(w http.ResponseWriter, r *http.Request) {
 	attempts := GetAttemptsFromContext(r)
 	if attempts > countAttempts {
+		h.Logg.Error("сервисы недоступны")
 		body := ErrorResponce{
 			Code:    http.StatusServiceUnavailable,
 			Message: "сервисы недоступны",
@@ -72,7 +73,7 @@ func (h *Handler) LB(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
+	h.Logg.Error("нет доступных серверов")
 	body := ErrorResponce{
 		Code:    http.StatusInternalServerError,
 		Message: "нет доступных серверов",

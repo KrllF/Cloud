@@ -58,6 +58,11 @@ func NewApp(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("config.NewConfig: %w", err)
 	}
 
+	logg, err := logger.NewLogger(zapcore.InfoLevel)
+	if err != nil {
+		return &App{}, fmt.Errorf("logger.NewLogger: %w", err)
+	}
+
 	cls := make([]Closer, 0, sizeCloser)
 
 	dbs, err := db.NewDB(ctx, conf)
@@ -65,7 +70,7 @@ func NewApp(ctx context.Context) (*App, error) {
 		return &App{}, fmt.Errorf("db.NewDB: %w", err)
 	}
 
-	repo, err := repository.NewRepository(dbs, conf)
+	repo, err := repository.NewRepository(logg, dbs, conf)
 	if err != nil {
 		return &App{}, fmt.Errorf("repository.NewRepository: %w", err)
 	}
@@ -77,15 +82,10 @@ func NewApp(ctx context.Context) (*App, error) {
 		return &App{}, fmt.Errorf("tokenbucket.NewRateLimiter: %w", err)
 	}
 
-	logg, err := logger.NewLogger(zapcore.InfoLevel)
-	if err != nil {
-		return &App{}, fmt.Errorf("logger.NewLogger: %w", err)
-	}
-
-	rateLimiter := middleware.RateLimiter(rate)
+	rateLimiter := middleware.RateLimiter(logg, rate)
 	logMiddleware := middleware.LogHandlerMiddleware(logg)
 
-	hand := handler.NewHandler(bal, rate)
+	hand := handler.NewHandler(logg, bal, rate)
 
 	httpServ := server.NewServer(conf, hand.Init(rateLimiter, logMiddleware))
 

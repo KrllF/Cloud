@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 )
 
 type (
@@ -20,12 +21,13 @@ type (
 
 	// Repo структура репо слоя
 	Repo struct {
+		logg *zap.Logger
 		db   DB
 		conf config.Config
 	}
 )
 
 // NewRepository новый Repo
-func NewRepository(db DB, conf config.Config) (*Repo, error) {
-	return &Repo{db: db, conf: conf}, nil
+func NewRepository(logg *zap.Logger, db DB, conf config.Config) (*Repo, error) {
+	return &Repo{logg: logg, db: db, conf: conf}, nil
 }
