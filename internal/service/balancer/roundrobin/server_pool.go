@@ -19,6 +19,7 @@ type ServerPool struct {
 	mu       sync.RWMutex
 }
 
+// NewServerPool конструктор ServerPool
 func NewServerPool(conf config.Config) *ServerPool {
 	serverPool := ServerPool{
 		conf:     conf,

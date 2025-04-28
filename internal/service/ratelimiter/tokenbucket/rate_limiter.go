@@ -22,6 +22,7 @@ type (
 	Repository interface {
 		AddUser(ctx context.Context, ip string) error
 		UpdateUser(ctx context.Context, ip string, opts ...entity.ListUserOption) error
+		GetAll(ctx context.Context) ([]entity.UserInfo, error)
 	}
 
 	// RateLimiter структура,
@@ -36,13 +37,32 @@ type (
 )
 
 // NewRateLimiter конструктор RateLimiter
-func NewRateLimiter(conf config.Config, repo Repository) *RateLimiter {
+func NewRateLimiter(ctx context.Context, conf config.Config, repo Repository) (*RateLimiter, error) {
+	ret, err := repo.GetAll(ctx)
+	if err != nil {
+		return &RateLimiter{}, fmt.Errorf("repo.GetAll: %w", err)
+	}
+	if len(ret) == 0 {
+		return &RateLimiter{
+			Conf:  conf,
+			Repo:  repo,
+			Users: make(map[string]*Bucket, usersSize),
+			Mu:    sync.Mutex{},
+		}, nil
+	}
+
+	mp := make(map[string]*Bucket, usersSize)
+	for _, val := range ret {
+		buck := NewBucket(val.TokenSize, time.Second*refillRate)
+		mp[val.UserIP] = buck
+	}
+
 	return &RateLimiter{
 		Conf:  conf,
 		Repo:  repo,
-		Users: make(map[string]*Bucket, usersSize),
+		Users: mp,
 		Mu:    sync.Mutex{},
-	}
+	}, nil
 }
 
 // AddUser добавить пользователя

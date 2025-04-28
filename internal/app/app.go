@@ -57,19 +57,30 @@ func NewApp(ctx context.Context) (*App, error) {
 	}
 
 	cls := make([]Closer, 0, sizeCloser)
+
 	dbs, err := db.NewDB(ctx, conf)
 	if err != nil {
 		return &App{}, fmt.Errorf("db.NewDB: %w", err)
 	}
+
 	repo, err := repository.NewRepository(dbs, conf)
 	if err != nil {
 		return &App{}, fmt.Errorf("repository.NewRepository: %w", err)
 	}
+
 	bal := roundrobin.NewServerPool(conf)
-	rate := tokenbucket.NewRateLimiter(conf, repo)
+
+	rate, err := tokenbucket.NewRateLimiter(ctx, conf, repo)
+	if err != nil {
+		return &App{}, fmt.Errorf("tokenbucket.NewRateLimiter: %w", err)
+	}
+
 	rateLimiter := middleware.RateLimiter(rate)
+
 	hand := handler.NewHandler(bal, rate)
+
 	httpServ := server.NewServer(conf, hand.Init(rateLimiter))
+
 	cls = append(cls, httpServ)
 	cls = append(cls, dbs)
 
