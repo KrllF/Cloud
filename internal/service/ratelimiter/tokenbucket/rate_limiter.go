@@ -30,8 +30,7 @@ type (
 	RateLimiter struct {
 		Conf  config.Config
 		Repo  Repository
-		Users map[string]*Bucket
-		Mu    sync.Mutex
+		Users sync.Map
 	}
 )
 
@@ -41,35 +40,24 @@ func NewRateLimiter(ctx context.Context, conf config.Config, repo Repository) (*
 	if err != nil {
 		return &RateLimiter{}, fmt.Errorf("repo.GetAll: %w", err)
 	}
-	if len(ret) == 0 {
-		return &RateLimiter{
-			Conf:  conf,
-			Repo:  repo,
-			Users: make(map[string]*Bucket, usersSize),
-			Mu:    sync.Mutex{},
-		}, nil
+
+	rateLimiter := &RateLimiter{
+		Conf: conf,
+		Repo: repo,
 	}
 
-	mp := make(map[string]*Bucket, usersSize)
 	for _, val := range ret {
 		buck := NewBucket(val.TokenSize, time.Second*refillRate)
-		mp[val.UserIP] = buck
+		rateLimiter.Users.Store(val.UserIP, buck)
 	}
 
-	return &RateLimiter{
-		Conf:  conf,
-		Repo:  repo,
-		Users: mp,
-		Mu:    sync.Mutex{},
-	}, nil
+	return rateLimiter, nil
 }
 
 // AddUser добавить пользователя
 func (r *RateLimiter) AddUser(ctx context.Context, id string) (bool, error) {
-	r.Mu.Lock()
-	defer r.Mu.Unlock()
-
-	if _, ok := r.Users[id]; ok {
+	_, exists := r.Users.Load(id)
+	if exists {
 		return false, nil
 	}
 
@@ -78,7 +66,7 @@ func (r *RateLimiter) AddUser(ctx context.Context, id string) (bool, error) {
 		return false, fmt.Errorf("r.Repo.AddUser: %w", err)
 	}
 
-	r.Users[id] = NewBucket(r.Conf.DefaultTokenSize, time.Second*refillRate)
+	r.Users.Store(id, NewBucket(r.Conf.DefaultTokenSize, time.Second*refillRate))
 
 	return true, nil
 }
@@ -88,22 +76,17 @@ func (r *RateLimiter) UpdateUser(ctx context.Context, ip string, tokenSize int64
 	if tokenSize <= 0 {
 		return errors.New("tokenSize <= 0")
 	}
-	r.Mu.Lock()
-	if _, ok := r.Users[ip]; !ok {
-		r.Mu.Unlock()
-
+	val, exists := r.Users.Load(ip)
+	if !exists {
 		return errors.New("пользователь не существует")
 	}
-	r.Mu.Unlock()
 
 	if err := r.Repo.UpdateUser(ctx, ip, entity.WithTokenSize(tokenSize)); err != nil {
 		return fmt.Errorf("r.Repo.UpdateUser: %w", err)
 	}
 
-	r.Mu.Lock()
-	defer r.Mu.Unlock()
-
-	r.Users[ip].UpdateTokenSize(tokenSize)
+	bucket, _ := val.(*Bucket)
+	bucket.UpdateTokenSize(tokenSize)
 
 	return nil
 }
@@ -111,16 +94,12 @@ func (r *RateLimiter) UpdateUser(ctx context.Context, ip string, tokenSize int64
 // Allow проверка на наличие токенов и
 // можно ли отправить запрос пользователю
 func (r *RateLimiter) Allow(id string) bool {
-	r.Mu.Lock()
-	defer r.Mu.Unlock()
-
-	if _, ok := r.Users[id]; !ok {
+	val, exists := r.Users.Load(id)
+	if !exists {
 		return false
 	}
 
-	if ok := r.Users[id].Allow(); !ok {
-		return false
-	}
+	bucket, _ := val.(*Bucket)
 
-	return true
+	return bucket.Allow()
 }

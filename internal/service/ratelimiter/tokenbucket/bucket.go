@@ -1,7 +1,6 @@
 package tokenbucket
 
 import (
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -11,7 +10,6 @@ type Bucket struct {
 	tokenNow   int64
 	tokenSize  int64
 	refillRate time.Duration
-	mu         sync.RWMutex
 }
 
 // NewBucket конструктор Bucket
@@ -20,7 +18,6 @@ func NewBucket(tokenSize int64, refillRate time.Duration) *Bucket {
 		tokenNow:   tokenSize,
 		tokenSize:  tokenSize,
 		refillRate: refillRate,
-		mu:         sync.RWMutex{},
 	}
 	go bucket.startRefilling()
 
@@ -29,11 +26,10 @@ func NewBucket(tokenSize int64, refillRate time.Duration) *Bucket {
 
 // UpdateTokenSize обновить максимальное количество токенов
 func (b *Bucket) UpdateTokenSize(tokenSize int64) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	b.tokenSize = tokenSize
-	if b.tokenNow > b.tokenSize {
-		b.tokenNow = b.tokenSize
+	atomic.StoreInt64(&b.tokenSize, tokenSize)
+	current := atomic.LoadInt64(&b.tokenNow)
+	if current > tokenSize {
+		atomic.StoreInt64(&b.tokenNow, tokenSize)
 	}
 }
 
