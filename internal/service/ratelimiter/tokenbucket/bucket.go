@@ -40,8 +40,9 @@ func (b *Bucket) startRefilling() {
 
 	for range ticker.C {
 		current := atomic.LoadInt64(&b.tokenNow)
+		tockenSize := atomic.LoadInt64(&b.tokenSize)
 		if current < b.tokenSize {
-			atomic.AddInt64(&b.tokenNow, 1)
+			atomic.StoreInt64(&b.tokenNow, tockenSize)
 		}
 	}
 }
