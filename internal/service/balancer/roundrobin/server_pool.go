@@ -37,7 +37,7 @@ func NewServerPool(conf config.Config) *ServerPool {
 			URL:   serverUrl,
 			Alive: true,
 		})
-		log.Printf("Configured server: %s\n", serverUrl)
+		log.Printf("сервер добавлен: %s\n", serverUrl)
 	}
 
 	return &serverPool

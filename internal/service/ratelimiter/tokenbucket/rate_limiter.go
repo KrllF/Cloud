@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -86,14 +85,12 @@ func (r *RateLimiter) AddUser(ctx context.Context, id string) (bool, error) {
 
 // UpdateUser обновить максимальное количество токенов
 func (r *RateLimiter) UpdateUser(ctx context.Context, ip string, tokenSize int64) error {
-	log.Println("start")
 	if tokenSize <= 0 {
 		return errors.New("tokenSize <= 0")
 	}
 	r.Mu.Lock()
 	if _, ok := r.Users[ip]; !ok {
 		r.Mu.Unlock()
-		log.Println("start")
 
 		return errors.New("пользователь не существует")
 	}

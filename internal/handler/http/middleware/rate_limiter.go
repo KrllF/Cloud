@@ -3,7 +3,9 @@ package middleware
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
+	"strings"
 )
 
 type rateLimiter interface {
@@ -11,16 +13,33 @@ type rateLimiter interface {
 	Allow(id string) bool
 }
 
+// getUserIP получить ip пользователя
 func getUserIP(r *http.Request) string {
 	ip := r.Header.Get("X-Real-Ip")
-	if ip == "" {
-		ip = r.Header.Get("X-Forwarded-For")
-	}
-	if ip == "" {
-		ip = r.RemoteAddr
+	if ip != "" && isValidIP(ip) {
+		return ip
 	}
 
-	return ip
+	forwared := r.Header.Get("X-Forwarded-For")
+	if forwared != "" {
+		ips := strings.Split(forwared, ",")
+		clientIP := strings.TrimSpace(ips[0])
+		if isValidIP(clientIP) {
+			return clientIP
+		}
+	}
+
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil && isValidIP(host) {
+		return host
+	}
+
+	return ""
+}
+
+// isValidIP проверяет является ли валидным ip
+func isValidIP(ip string) bool {
+	return net.ParseIP(ip) != nil
 }
 
 // RateLimiter middleware, которая проверяет token bucket для пользователя
