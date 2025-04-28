@@ -18,6 +18,8 @@ import (
 	"github.com/KrllF/Cloud/internal/server"
 	"github.com/KrllF/Cloud/internal/service/balancer/roundrobin"
 	"github.com/KrllF/Cloud/internal/service/ratelimiter/tokenbucket"
+	"github.com/KrllF/Cloud/pkg/logger"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -75,11 +77,17 @@ func NewApp(ctx context.Context) (*App, error) {
 		return &App{}, fmt.Errorf("tokenbucket.NewRateLimiter: %w", err)
 	}
 
+	logg, err := logger.NewLogger(zapcore.InfoLevel)
+	if err != nil {
+		return &App{}, fmt.Errorf("logger.NewLogger: %w", err)
+	}
+
 	rateLimiter := middleware.RateLimiter(rate)
+	logMiddleware := middleware.LogHandlerMiddleware(logg)
 
 	hand := handler.NewHandler(bal, rate)
 
-	httpServ := server.NewServer(conf, hand.Init(rateLimiter))
+	httpServ := server.NewServer(conf, hand.Init(rateLimiter, logMiddleware))
 
 	cls = append(cls, httpServ)
 	cls = append(cls, dbs)

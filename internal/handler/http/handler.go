@@ -42,13 +42,15 @@ func NewHandler(serverPool ServerPool, rateLimiter RateLimiter) Handler {
 }
 
 // Init инициализация хендлера с middleware
-func (h *Handler) Init(rateLimiterMiddleware func(http.Handler) http.Handler) http.HandlerFunc {
+func (h *Handler) Init(rateLimiterMiddleware func(http.Handler) http.Handler,
+	logMiddleware func(http.Handler) http.Handler,
+) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mux := http.NewServeMux()
 
-		mux.Handle("/", rateLimiterMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mux.Handle("/", logMiddleware(rateLimiterMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			h.LB(w, r)
-		})))
+		}))))
 
 		mux.HandleFunc("/client", h.UpdateTokenSize)
 
