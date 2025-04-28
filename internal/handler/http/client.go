@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -14,7 +15,19 @@ type UpdateTokenSizeRequest struct {
 // UpdateTokenSize обновить максильманый размер токенов
 func (h *Handler) UpdateTokenSize(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
+		body := ErrorResponce{
+			Code:    http.StatusBadRequest,
+			Message: "r.Method != http.MethodPost",
+		}
+		b, err := json.Marshal(body)
+		if err != nil {
+			log.Printf("json.Marshal: %v\n", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
+		if _, err := w.Write(b); err != nil {
+			log.Printf("ошибка при отправке ответа: %v\n", err)
+		}
 
 		return
 	}
@@ -23,13 +36,37 @@ func (h *Handler) UpdateTokenSize(w http.ResponseWriter, r *http.Request) {
 	var token UpdateTokenSizeRequest
 	err := json.NewDecoder(r.Body).Decode(&token)
 	if err != nil {
+		body := ErrorResponce{
+			Code:    http.StatusBadRequest,
+			Message: "json.NewDecoder",
+		}
+		b, err := json.Marshal(body)
+		if err != nil {
+			log.Printf("json.Marshal: %v\n", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
+		if _, err := w.Write(b); err != nil {
+			log.Printf("ошибка при отправке ответа: %v\n", err)
+		}
 
 		return
 	}
 
 	if err = h.RateLimiter.UpdateUser(r.Context(), token.UserIP, token.TokenSize); err != nil {
+		body := ErrorResponce{
+			Code:    http.StatusInternalServerError,
+			Message: "h.RateLimiter.UpdateUser",
+		}
+		b, err := json.Marshal(body)
+		if err != nil {
+			log.Printf("json.Marshal: %v\n", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := w.Write(b); err != nil {
+			log.Printf("ошибка при отправке ответа: %v\n", err)
+		}
 
 		return
 	}

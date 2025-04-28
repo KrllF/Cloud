@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -20,7 +21,19 @@ const (
 func (h *Handler) LB(w http.ResponseWriter, r *http.Request) {
 	attempts := GetAttemptsFromContext(r)
 	if attempts > countAttempts {
-		http.Error(w, "Service not available", http.StatusServiceUnavailable)
+		body := ErrorResponce{
+			Code:    http.StatusServiceUnavailable,
+			Message: "сервисы недоступны",
+		}
+		b, err := json.Marshal(body)
+		if err != nil {
+			log.Printf("json.Marshal: %v\n", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		if _, err := w.Write(b); err != nil {
+			log.Printf("ошибка при отправке ответа: %v\n", err)
+		}
 
 		return
 	}
@@ -60,5 +73,17 @@ func (h *Handler) LB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Error(w, "нет доступных серверов", http.StatusInternalServerError)
+	body := ErrorResponce{
+		Code:    http.StatusInternalServerError,
+		Message: "нет доступных серверов",
+	}
+	b, err := json.Marshal(body)
+	if err != nil {
+		log.Printf("json.Marshal: %v\n", err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	if _, err := w.Write(b); err != nil {
+		log.Printf("ошибка при отправке ответа: %v\n", err)
+	}
 }
